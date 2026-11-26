@@ -1,0 +1,12 @@
+{
+  "name": "guia-claude-code",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Guía interactiva de Claude Code con asistente IA (Haiku 5.5, effort medium)",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

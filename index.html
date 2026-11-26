@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Guía interactiva de Claude Code</title>
+  <meta name="description" content="Aprende cómo funciona Claude Code: comandos, flags, atajos, extensiones y un asistente IA para resolver tus dudas.">
+  <link rel="stylesheet" href="css/styles.css?v=7">
+</head>
+<body>
+  <a class="skip-link" href="#main">Saltar al contenido</a>
+
+  <!-- ===== Barra de navegación ===== -->
+  <header class="topbar" id="topbar">
+    <div class="topbar__inner">
+      <a class="brand" href="#/inicio" aria-label="Ir al inicio">
+        <span class="brand__mark" aria-hidden="true">✻</span>
+        <span class="brand__name">Claude Code <em>Guía</em></span>
+      </a>
+
+      <button class="icon-btn nav-toggle" id="navToggle" aria-label="Abrir menú" aria-expanded="false" aria-controls="nav">
+        <span></span><span></span><span></span>
+      </button>
+
+      <nav class="nav" id="nav" aria-label="Categorías">
+        <ul class="nav__list" id="navList"><!-- generado por app.js --></ul>
+      </nav>
+
+      <div class="topbar__tools">
+        <label class="search" for="globalSearch">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="9" cy="9" r="6" fill="none" stroke="currentColor" stroke-width="2"/><path d="M14 14l4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          <input id="globalSearch" type="search" placeholder="Buscar…  ( / )" autocomplete="off" spellcheck="false">
+        </label>
+        <button class="icon-btn" id="themeToggle" aria-label="Cambiar tema" title="Cambiar tema">◐</button>
+      </div>
+    </div>
+    <div class="progress" id="progress" aria-hidden="true"></div>
+  </header>
+
+  <!-- ===== Contenido dinámico ===== -->
+  <main id="main" class="main" tabindex="-1">
+    <div id="view" class="view"><!-- vista actual --></div>
+  </main>
+
+  <footer class="footer">
+    <p>Guía no oficial para aprender Claude Code. Para información oficial consulta la documentación de Anthropic.</p>
+  </footer>
+
+  <!-- ===== Widget de chat (asistente IA) ===== -->
+  <div class="chat" id="chat">
+    <button class="chat__fab" id="chatFab" aria-label="Abrir asistente de Claude Code" aria-expanded="false" aria-controls="chatPanel">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+      <span>Pregúntale a la IA</span>
+    </button>
+
+    <section class="chat__panel" id="chatPanel" role="dialog" aria-label="Asistente de Claude Code" hidden>
+      <header class="chat__head">
+        <div>
+          <strong>Asistente Claude Code</strong>
+          <span class="chat__model" id="chatModelBadge">Haiku 5.5 · effort medium</span>
+        </div>
+        <div class="chat__head-actions">
+          <button class="icon-btn" id="chatSettingsBtn" aria-label="Ajustes del asistente" title="Ajustes">⚙</button>
+          <button class="icon-btn" id="chatClearBtn" aria-label="Nueva conversación" title="Nueva conversación">↺</button>
+          <button class="icon-btn" id="chatCloseBtn" aria-label="Cerrar">✕</button>
+        </div>
+      </header>
+
+      <div class="chat__settings" id="chatSettings" hidden>
+        <label for="apiKeyInput">API key alternativa (solo si el servidor no tiene una)</label>
+        <input id="apiKeyInput" type="password" placeholder="sk-ant-..." autocomplete="off" spellcheck="false">
+        <div class="chat__settings-row">
+          <button class="btn btn--small" id="apiKeySave">Guardar</button>
+          <button class="btn btn--small btn--ghost" id="apiKeyClear">Borrar</button>
+        </div>
+        <p class="hint"><strong>Recomendado:</strong> pon <code>ANTHROPIC_API_KEY</code> en el archivo <code>.env</code> y arranca con <code>npm start</code>; así la clave no pasa por el navegador. Esta opción la guarda en localStorage (solo pruebas locales). Sin ninguna clave, el asistente responde en modo offline con la información de la guía.</p>
+      </div>
+
+      <div class="chat__status" id="chatStatus"></div>
+      <div class="chat__messages" id="chatMessages" aria-live="polite"></div>
+      <div class="chat__suggestions" id="chatSuggestions"></div>
+
+      <form class="chat__form" id="chatForm">
+        <textarea id="chatInput" rows="1" placeholder="Pregunta sobre Claude Code…" aria-label="Tu pregunta"></textarea>
+        <button class="btn" id="chatSend" type="submit">Enviar</button>
+      </form>
+    </section>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="js/data.js?v=7"></script>
+  <script src="js/links.js?v=7"></script>
+  <script src="js/app.js?v=7"></script>
+  <script src="js/chat.js?v=7"></script>
+</body>
+</html>
