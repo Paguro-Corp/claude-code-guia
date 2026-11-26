@@ -103,6 +103,7 @@
     const render = views[id] || views.inicio;
     const realId = views[id] ? id : "inicio";
     markActive(realId);
+    document.body.classList.remove("uc-open");   // por si se salió con el detalle abierto
     viewEl.innerHTML = "";
     viewEl.style.animation = "none"; void viewEl.offsetWidth; viewEl.style.animation = "";
     render(viewEl, params);
@@ -236,6 +237,117 @@
       <div class="cards">
         ${D.concepts.map((c) => `<div class="card" data-id="${CCLinks.entryId("concept", c.title)}"><h3>${esc(c.title)}</h3><p>${esc(c.text)}</p></div>`).join("")}
       </div>`;
+  };
+
+  /* ----- Casos de uso ----- */
+  views.casos = function (root, params) {
+    const intro = D.useCaseIntro;
+    const state = { biz: "Todos", type: "Todos", q: "" };
+    const levelDots = { Básico: 1, Intermedio: 2, Avanzado: 3 };
+    const dots = (lvl) => "●".repeat(levelDots[lvl] || 1) + "○".repeat(3 - (levelDots[lvl] || 1));
+    const ucId = (u) => CCLinks.entryId("uc", u.title);
+
+    root.innerHTML = `
+      ${pageHead(intro.title, intro.lead)}
+      <ol class="uc-steps">
+        ${intro.steps.map((s) => {
+          const e = CCLinks.byId(s.link);
+          return `<li><span class="uc-steps__n">${esc(s.n)}</span><div><strong>${esc(s.title)}</strong><p>${esc(s.text)}</p>${e ? `<a class="guide-chip" href="${e.href}"><small>${esc(e.kind)}</small> ${esc(e.short || e.label)}</a>` : ""}</div></li>`;
+        }).join("")}
+      </ol>
+      <div class="toolbar"><span class="toolbar__label">Negocio</span><div class="chips" id="ucBiz" role="group" aria-label="Filtrar por negocio"></div></div>
+      <div class="toolbar"><span class="toolbar__label">Tipo</span><div class="chips" id="ucType" role="group" aria-label="Filtrar por tipo de proyecto"></div></div>
+      <div class="toolbar">
+        <input class="filter-input" id="ucFilter" type="search" placeholder="Buscar un caso de uso…" aria-label="Buscar un caso de uso">
+        <span class="count" id="ucCount"></span>
+      </div>
+      <div id="ucList"></div>
+      <div class="note">${esc(intro.note)}</div>
+      <div class="uc-overlay" id="ucOverlay" hidden><div class="uc-sheet" id="ucSheet" role="dialog" aria-modal="false" aria-labelledby="ucTitle" tabindex="-1"></div></div>`;
+
+    const bizEl = $("#ucBiz", root), typeEl = $("#ucType", root), listEl = $("#ucList", root), countEl = $("#ucCount", root);
+    const overlay = $("#ucOverlay", root), sheet = $("#ucSheet", root);
+    let lastOpener = null;
+
+    const chips = (arr, active, attr) => ["Todos", ...arr].map((c) => `<button class="chip" type="button" aria-pressed="${c === active}" data-${attr}="${esc(c)}">${esc(c)}</button>`).join("");
+
+    function draw() {
+      bizEl.innerHTML = chips(D.useCaseCategories, state.biz, "biz");
+      typeEl.innerHTML = chips(D.useCaseTypes, state.type, "type");
+      const q = norm(state.q.trim());
+      const list = D.useCases.filter((u) =>
+        (state.biz === "Todos" || u.cat === state.biz) &&
+        (state.type === "Todos" || u.type === state.type) &&
+        (!q || norm([u.title, u.summary, u.cat, u.type, u.features.join(" ")].join(" ")).includes(q))
+      );
+      countEl.textContent = list.length + (list.length === 1 ? " caso de uso" : " casos de uso");
+      if (!list.length) { listEl.innerHTML = `<div class="empty">Ningún caso coincide con tu búsqueda. Prueba con otro filtro o pregúntale al asistente de IA qué podrías construir.</div>`; return; }
+      listEl.innerHTML = D.useCaseCategories
+        .map((cat) => {
+          const items = list.filter((u) => u.cat === cat);
+          if (!items.length) return "";
+          return `<h2 class="section-title">${esc(cat)} <span class="badge">${items.length}</span></h2>
+            <div class="uc-grid">${items.map((u) => `
+              <div class="uc-card" data-id="${ucId(u)}" role="button" tabindex="0" aria-label="Ver el caso de uso: ${esc(u.title)}">
+                <div class="uc-card__top"><span class="badge badge--accent">${esc(u.type)}</span><span class="uc-level" title="Dificultad: ${esc(u.level)}" aria-label="Dificultad: ${esc(u.level)}">${dots(u.level)} <small>${esc(u.level)}</small></span></div>
+                <h3>${esc(u.title)}</h3>
+                <p>${esc(u.summary)}</p>
+                <span class="arrow">Ver detalle →</span>
+              </div>`).join("")}</div>`;
+        }).join("");
+    }
+
+    function open(id, fromEl) {
+      const u = D.useCases.find((x) => ucId(x) === id);
+      if (!u) return;
+      lastOpener = fromEl || null;
+      const related = u.related.map((r) => CCLinks.byId(r)).filter(Boolean)
+        .map((e) => `<a class="guide-chip" href="${e.href}"><small>${esc(e.kind)}</small> ${esc(e.short || e.label)}</a>`).join("");
+      sheet.innerHTML = `
+        <button class="uc-close icon-btn" type="button" aria-label="Cerrar detalle">✕</button>
+        <div class="uc-badges"><span class="badge badge--accent">${esc(u.type)}</span><span class="badge">${esc(u.cat)}</span><span class="badge">Dificultad: ${esc(u.level)} ${dots(u.level)}</span></div>
+        <h2 id="ucTitle">${esc(u.title)}</h2>
+        <p class="uc-summary">${esc(u.summary)}</p>
+        <h3>Qué obtienes</h3>
+        <ul>${u.features.map((f) => `<li>${esc(f)}</li>`).join("")}</ul>
+        <div class="uc-cols">
+          <div><h3>Lo que necesitarás</h3><ul>${u.needs.map((n) => `<li>${esc(n)}</li>`).join("")}</ul></div>
+          <div><h3>Stack sugerido</h3><p>${esc(u.stack)}</p></div>
+        </div>
+        <h3>Prompt para empezar</h3>
+        <pre class="code"><code>${esc(u.prompt)}</code></pre>
+        <p><button class="copy" type="button" data-copy="${esc(u.prompt)}">Copiar prompt</button> <span class="uc-hint">Cambia lo que está entre [corchetes] por los datos de tu negocio.</span></p>
+        <p class="uc-tip"><strong>Tip:</strong> ${esc(u.tip)}</p>
+        ${related ? `<h3>📖 Aprende en la guía lo que necesitas</h3><div class="uc-related">${related}</div>` : ""}`;
+      overlay.hidden = false;
+      document.body.classList.add("uc-open");
+      sheet.scrollTop = 0;
+      $(".uc-close", sheet).focus({ preventScroll: true });
+      history.replaceState(null, "", "#/casos?focus=" + id);   // enlace compartible, sin recargar la vista
+    }
+
+    function close() {
+      if (overlay.hidden) return;
+      overlay.hidden = true;
+      document.body.classList.remove("uc-open");
+      history.replaceState(null, "", "#/casos");
+      if (lastOpener && lastOpener.isConnected) lastOpener.focus({ preventScroll: true });
+    }
+
+    bizEl.addEventListener("click", (e) => { const b = e.target.closest("[data-biz]"); if (b) { state.biz = b.dataset.biz; draw(); } });
+    typeEl.addEventListener("click", (e) => { const b = e.target.closest("[data-type]"); if (b) { state.type = b.dataset.type; draw(); } });
+    $("#ucFilter", root).addEventListener("input", (e) => { state.q = e.target.value; draw(); });
+    listEl.addEventListener("click", (e) => { const c = e.target.closest(".uc-card"); if (c) open(c.dataset.id, c); });
+    listEl.addEventListener("keydown", (e) => {
+      if ((e.key === "Enter" || e.key === " ") && e.target.classList.contains("uc-card")) { e.preventDefault(); open(e.target.dataset.id, e.target); }
+    });
+    overlay.addEventListener("click", (e) => { if (e.target === overlay || e.target.closest(".uc-close")) close(); });
+    overlay.addEventListener("click", (e) => { if (e.target.closest("a")) { overlay.hidden = true; document.body.classList.remove("uc-open"); } });
+    root.addEventListener("keydown", (e) => { if (e.key === "Escape") close(); });
+
+    draw();
+    const focus = params.get("focus");
+    if (focus && focus.startsWith("uc-")) open(focus, $(`.uc-card[data-id="${focus}"]`, root));
   };
 
   /* ----- Comandos (con filtros) ----- */
@@ -383,6 +495,7 @@
       { title: "Comandos de terminal", view: "cli", items: D.cliCommands.filter((c) => match(c.name, c.desc)) },
       { title: "Flags", view: "cli", items: D.cliFlags.filter((c) => match(c.name, c.desc)) },
       { title: "Atajos", view: "atajos", items: D.shortcuts.filter((s) => match(s.keys.join(" "), s.desc)).map((s) => ({ name: s.keys.join(" + "), desc: s.desc })) },
+      { title: "Casos de uso", view: "casos", items: D.useCases.filter((u) => match(u.title, u.summary, u.cat, u.type)).map((u) => ({ name: u.title, desc: u.summary, note: u.cat })) },
       { title: "Extensiones", view: "extensiones", items: D.extensions.filter((e) => match(e.title, e.summary, (e.points || []).join(" "))).map((e) => ({ name: e.title, desc: e.summary })) },
       { title: "Buenas prácticas", view: "practicas", items: D.practices.filter((p) => match(p.title, p.text)).map((p) => ({ name: p.title, desc: p.text })) }
     ].filter((g) => q && g.items.length);

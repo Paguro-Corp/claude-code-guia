@@ -8,6 +8,7 @@ window.CC_DATA = {
   views: [
     { id: "inicio",      label: "Inicio",           icon: "◆" },
     { id: "como-funciona", label: "Cómo funciona",  icon: "⟳" },
+    { id: "casos",       label: "Casos de uso",     icon: "✦" },
     { id: "comandos",    label: "Comandos /",       icon: "/" },
     { id: "cli",         label: "CLI y flags",      icon: ">_" },
     { id: "atajos",      label: "Atajos",           icon: "⌘" },
@@ -22,6 +23,7 @@ window.CC_DATA = {
     lead: "Claude Code es un agente de programación que vive en tu terminal (y en IDE, escritorio y web). Lee tu código, edita archivos, ejecuta comandos y trabaja contigo hasta terminar la tarea.",
     cards: [
       { view: "como-funciona", title: "Cómo funciona",   text: "El ciclo agéntico, las herramientas y el contexto." },
+      { view: "casos",         title: "Casos de uso",    text: "20 proyectos que puedes construir: webs, funnels, dashboards y más." },
       { view: "comandos",      title: "Comandos /",      text: "Todos los slash commands con su descripción." },
       { view: "cli",           title: "CLI y flags",     text: "Lanza Claude Code desde la terminal con opciones." },
       { view: "atajos",        title: "Atajos",          text: "Teclas y prefijos para ir más rápido." },

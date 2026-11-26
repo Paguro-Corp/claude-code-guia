@@ -103,7 +103,7 @@
 
   D.permissionModes.forEach((m) => {
     const id = entryId("mode", m.name);
-    add({ id, kind: "Permisos", label: `${m.name} (${m.title})`, desc: m.desc, view: "permisos", param: "focus", value: id, terms: MODE_TERMS[slug(m.name)] || [] });
+    add({ id, kind: "Permisos", label: `${m.name} (${m.title})`, short: `Modo ${m.title}`, desc: m.desc, view: "permisos", param: "focus", value: id, terms: MODE_TERMS[slug(m.name)] || [] });
   });
 
   add({ id: "settings", kind: "Config", label: "Archivos de configuración (settings.json)", desc: "Dónde se guardan las preferencias: usuario, proyecto y local.", view: "permisos", param: "focus", value: "settings", terms: ["settings.json", "settings.local.json"] });
@@ -113,10 +113,21 @@
     add({ id, kind: "Práctica", label: p.title, desc: p.text, view: "practicas", param: "focus", value: id, terms: [] });
   });
 
+  (D.useCases || []).forEach((u) => {
+    const id = entryId("uc", u.title);
+    add({
+      id, kind: "Caso de uso", label: u.title, short: u.title,
+      desc: `${u.summary} (${u.cat} · ${u.type} · ${u.level})`,
+      view: "casos", param: "focus", value: id, terms: []
+    });
+  });
+
   /* ---------- Consulta ---------- */
   const byHrefMap = new Map();
-  entries.concat(viewEntries).forEach((e) => byHrefMap.set(e.href, e));
+  const byIdMap = new Map();
+  entries.concat(viewEntries).forEach((e) => { byHrefMap.set(e.href, e); byIdMap.set(e.id, e); });
   const byHref = (href) => byHrefMap.get(href) || null;
+  const byId = (id) => byIdMap.get(id) || null;
 
   const reCache = new Map();
   function termRe(t) {
@@ -151,5 +162,5 @@
     return "### Secciones\n" + secs + "\n### Elementos\n" + items;
   }
 
-  window.CCLinks = { entries, viewEntries, entryId, keyId, slug, copyable, byHref, related, promptList };
+  window.CCLinks = { entries, viewEntries, entryId, keyId, slug, copyable, byHref, byId, related, promptList };
 })();

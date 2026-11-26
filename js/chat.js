@@ -69,6 +69,7 @@
       "- Usa EXCLUSIVAMENTE los enlaces de la lista, copiados tal cual. Nunca inventes ni modifiques un enlace. Si algo no está en la lista, menciónalo sin enlace.",
       "- Enlaza cada elemento solo la primera vez que lo nombres. Pon el enlace en el nombre del comando/concepto, no en frases largas.",
       "- Si la respuesta se apoya en una sección completa, puedes cerrar con una frase corta como «Más detalle en [Comandos /](#/comandos)».",
+      "- La guía incluye una sección «Casos de uso» con proyectos que se pueden construir (tipo «Caso de uso» en la lista). Si el usuario describe un negocio o un proyecto que quiere hacer, recomiéndale 1-3 casos de uso relacionados enlazándolos.",
       "",
       "Referencia de la guía (cada línea: [nombre](enlace) (tipo): descripción). Úsala como base del contenido:",
       window.CCLinks.promptList()
@@ -214,6 +215,7 @@
     const view = window.CCApp ? window.CCApp.getView() : "inicio";
     const bank = {
       inicio: ["¿Qué es Claude Code?", "¿Cómo empiezo a usarlo?", "¿Qué hace /init?"],
+      casos: ["Tengo un salón de belleza, ¿qué puedo construir?", "¿Cómo armo un sales funnel con Claude Code?", "Quiero un dashboard de mis ventas"],
       "como-funciona": ["¿Qué es el ciclo agéntico?", "¿Qué herramientas usa Claude?", "¿Qué es la ventana de contexto?"],
       comandos: ["¿Diferencia entre /clear y /compact?", "¿Para qué sirve /effort?", "¿Cómo veo cuánto contexto uso?"],
       cli: ["¿Cómo uso claude -p en un script?", "¿Cómo retomo una sesión?", "¿Qué hace --permission-mode?"],
