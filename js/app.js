@@ -350,6 +350,170 @@
     if (focus && focus.startsWith("uc-")) open(focus, $(`.uc-card[data-id="${focus}"]`, root));
   };
 
+  /* ----- Modelos y effort ----- */
+  views.modelos = function (root) {
+    const G = D.modelsGuide;
+    const M = Object.fromEntries(G.models.map((m) => [m.id, m]));
+    const state = { prio: "equilibrio", cat: "Todas", q: "" };
+    const money = (n) => "$" + (n < 1 ? n.toFixed(2) : n);
+    const chip = (id) => {
+      const e = CCLinks.byId(id);
+      return e ? `<a class="guide-chip" href="${e.href}"><small>${esc(e.kind)}</small> ${esc(e.short || e.label)}</a>` : "";
+    };
+    const pill = (id) => `<span class="mg-pill mg-pill--${id}"><i aria-hidden="true"></i>${esc(M[id].short)}</span>`;
+    const rec = (r) => `${pill(r[0])}<span class="mg-eff">effort ${esc(r[1])}</span>`;
+    const taskId = (t) => CCLinks.entryId("task", t.title);
+    const list = (arr) => `<ul>${arr.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>`;
+    const levels = G.effortLevels.map((e) => e.id);
+
+    /* Costo relativo por token (entrada): mismo reparto para la salida */
+    const minIn = Math.min(...G.models.map((m) => m.price.in));
+    const maxIn = Math.max(...G.models.map((m) => m.price.in));
+
+    const modelCard = (m) => `
+      <article class="mg-model mg-model--${m.id}" data-id="${CCLinks.entryId("model", m.short)}">
+        <div class="mg-model__top"><span class="badge badge--accent">${esc(m.tier)}</span><code>${esc(m.apiId)}</code></div>
+        <h3>${esc(m.name)}</h3>
+        <p class="mg-tagline">${esc(m.tagline)}</p>
+        <dl class="mg-stats">
+          <div><dt>Entrada / 1M</dt><dd>${money(m.price.in)}</dd></div>
+          <div><dt>Salida / 1M</dt><dd>${money(m.price.out)}</dd></div>
+          <div><dt>Contexto</dt><dd>${esc(m.ctx)}</dd></div>
+          <div><dt>Effort inicial</dt><dd>${esc(m.effortStart)}</dd></div>
+        </dl>
+        <h4>¿Por qué elegirlo?</h4>${list(m.why)}
+        <h4>Casos de uso ideales</h4>
+        <ul class="mg-uc">${m.useCases.map((u) => `<li><strong>${esc(u.t)}.</strong> ${esc(u.d)}</li>`).join("")}</ul>
+        <h4>Mejor evítalo cuando</h4>${list(m.avoid)}
+        <h4>Ten en cuenta</h4>${list(m.notes)}
+        <p class="mg-model__cmd"><button class="copy" type="button" data-copy="${esc(m.cmd)}">Copiar ${esc(m.cmd)}</button>
+          <button class="copy" type="button" data-copy="${esc("/effort " + m.effortStart)}">Copiar /effort ${esc(m.effortStart)}</button></p>
+      </article>`;
+
+    root.innerHTML = `
+      ${pageHead(G.title, G.lead)}
+      <ol class="uc-steps">
+        ${G.rules.map((s) => `<li><span class="uc-steps__n">${esc(s.n)}</span><div><strong>${esc(s.title)}</strong><p>${esc(s.text)}</p>${chip(s.link)}</div></li>`).join("")}
+      </ol>
+      <div class="chips mg-toc" role="group" aria-label="Ir a una parte de esta sección">
+        ${[["mg-tareas", "Elegir por tarea"], ["mg-modelos", "Los modelos"], ["mg-mapa", "Mapa modelo × effort"], ["mg-effort", "Niveles de effort"], ["mg-combos", "Estrategias"], ["mg-senales", "Subir o bajar"], ["mg-comandos", "Cómo cambiarlo"]]
+          .map(([id, label]) => `<button class="chip" type="button" data-go="${id}">${esc(label)}</button>`).join("")}
+      </div>
+
+      <h2 class="section-title" id="mg-tareas">¿Qué modelo uso para mi tarea?</h2>
+      <div class="toolbar"><span class="toolbar__label">Prioridad</span><div class="chips" id="mgPrio" role="group" aria-label="Prioridad"></div><span class="uc-hint" id="mgPrioHint"></span></div>
+      <div class="toolbar"><span class="toolbar__label">Tipo</span><div class="chips" id="mgCat" role="group" aria-label="Filtrar por tipo de tarea"></div></div>
+      <div class="toolbar">
+        <input class="filter-input" id="mgFilter" type="search" placeholder="Buscar una tarea…" aria-label="Buscar una tarea">
+        <span class="count" id="mgCount"></span>
+      </div>
+      <div class="mg-tasks" id="mgTasks"></div>
+
+      <h2 class="section-title" id="mg-modelos">Los modelos: cuándo y por qué usar cada uno</h2>
+      <div class="mg-models">${G.models.map(modelCard).join("")}</div>
+
+      <h3 class="mg-sub">Costo relativo por token</h3>
+      <div class="mg-bars" role="img" aria-label="Costo relativo por token: ${G.models.map((m) => `${m.short} ${Math.round(m.price.in / minIn)} veces`).join(", ")}">
+        ${G.models.map((m) => `
+          <div class="mg-bar"><span class="mg-bar__name">${esc(m.short)}</span>
+            <span class="mg-bar__track"><span class="mg-bar__fill mg-bar__fill--${m.id}" style="width:${Math.max(1.5, (m.price.in / maxIn) * 100)}%"></span></span>
+            <span class="mg-bar__val">${m.price.in === minIn ? "1×" : "×" + Math.round(m.price.in / minIn)}</span></div>`).join("")}
+      </div>
+      <p class="mg-foot">Relativo a Haiku 5.5 (1×). El costo real depende de los tokens que use cada tarea: un effort alto o un turno largo gastan más. ${esc(G.refNote)}</p>
+
+      <h3 class="mg-sub">Comparativa rápida</h3>
+      <div class="mg-scroll"><table class="mg-table">
+        <thead><tr><th scope="col">Modelo</th><th scope="col">Entrada / 1M</th><th scope="col">Salida / 1M</th><th scope="col">Contexto</th><th scope="col">Salida máx.</th><th scope="col">Effort por defecto (API)</th><th scope="col">Effort inicial sugerido</th><th scope="col">Modo rápido</th></tr></thead>
+        <tbody>${G.models.map((m) => `<tr><th scope="row">${pill(m.id)}</th><td>${money(m.price.in)}</td><td>${money(m.price.out)}</td><td>${esc(m.ctx)}</td><td>${esc(m.maxOut)}</td><td>${esc(m.effortDefault)}</td><td>${esc(m.effortStart)}</td><td>${esc(m.fast)}</td></tr>`).join("")}</tbody>
+      </table></div>
+
+      <h2 class="section-title" id="mg-mapa">Mapa modelo × effort</h2>
+      <p class="mg-foot" style="margin-top:0">Qué nivel de effort tiene sentido en cada modelo.</p>
+      <div class="mg-scroll"><table class="mg-table mg-map">
+        <thead><tr><th scope="col">Modelo</th>${levels.map((l) => `<th scope="col"><code>${esc(l)}</code></th>`).join("")}</tr></thead>
+        <tbody>${G.models.map((m) => `<tr><th scope="row">${pill(m.id)}</th>${levels.map((l) => { const [k, t] = m.effortMap[l]; return `<td class="mg-cell mg-cell--${k}">${esc(t)}</td>`; }).join("")}</tr>`).join("")}</tbody>
+      </table></div>
+      <div class="mg-legend"><span><i class="mg-cell--rec"></i> Recomendado</span><span><i class="mg-cell--ok"></i> Posible</span><span><i class="mg-cell--rare"></i> Rara vez compensa</span></div>
+
+      <h2 class="section-title" id="mg-effort">Los niveles de effort</h2>
+      <div class="mg-efforts">
+        ${G.effortLevels.map((e) => `
+          <div class="mg-effort" data-id="${CCLinks.entryId("effort", e.id)}">
+            <div class="mg-effort__top"><code>${esc(e.id)}</code><span class="mg-meter" role="img" aria-label="Nivel ${e.level} de 5">${[1, 2, 3, 4, 5].map((n) => `<i class="${n <= e.level ? "on" : ""}"></i>`).join("")}</span></div>
+            <h3>${esc(e.tag)}</h3>
+            <p>${esc(e.text)}</p>
+            <p><strong>Úsalo en:</strong> ${esc(e.use)}</p>
+            <p class="mg-effort__watch"><strong>Ojo:</strong> ${esc(e.watch)}</p>
+            <button class="copy" type="button" data-copy="${esc("/effort " + e.id)}">Copiar /effort ${esc(e.id)}</button>
+          </div>`).join("")}
+      </div>
+
+      <h2 class="section-title" id="mg-combos">Estrategias para combinar modelos</h2>
+      <div class="mg-combos">
+        ${G.combos.map((c) => `
+          <div class="mg-combo" data-id="${CCLinks.entryId("combo", c.title)}">
+            <h3>${esc(c.title)}</h3>
+            <p>${esc(c.text)}</p>
+            ${c.code ? `<pre class="code"><code>${esc(c.code)}</code></pre><p><button class="copy" type="button" data-copy="${esc(c.code)}">Copiar ejemplo</button></p>` : ""}
+            ${c.link ? chip(c.link) : ""}
+          </div>`).join("")}
+      </div>
+
+      <h2 class="section-title" id="mg-senales">¿Subo o bajo? Señales para decidir</h2>
+      <div class="mg-signals">
+        <div class="mg-signal mg-signal--up"><h3>↑ Sube el effort o el modelo si…</h3>${list(G.signals.up)}</div>
+        <div class="mg-signal mg-signal--down"><h3>↓ Bájalo si…</h3>${list(G.signals.down)}</div>
+      </div>
+
+      <h2 class="section-title" id="mg-comandos">Cómo cambiarlo en Claude Code</h2>
+      <div class="items">
+        ${G.commands.map((c) => `
+          <div class="mg-cmdrow"><code>${esc(c.cmd)}</code><span>${esc(c.text)}</span>
+            <span class="mg-cmdrow__meta"><button class="copy" type="button" data-copy="${esc(c.cmd)}">Copiar</button>${chip(c.link)}</span></div>`).join("")}
+      </div>
+      <div class="note">${esc(G.note)}</div>`;
+
+    /* --- Recomendador por tarea --- */
+    const prioEl = $("#mgPrio", root), catEl = $("#mgCat", root), tasksEl = $("#mgTasks", root), countEl = $("#mgCount", root), hintEl = $("#mgPrioHint", root);
+    const cats = ["Todas", ...G.taskCategories];
+    const taskCard = (t) => {
+      const r = t.rec[state.prio];
+      const others = G.priorities.filter((p) => p.id !== state.prio)
+        .map((p) => `${esc(p.label)}: <strong>${esc(M[t.rec[p.id][0]].short)}</strong> · ${esc(t.rec[p.id][1])}`).join("<br>");
+      return `
+        <article class="mg-task" data-id="${taskId(t)}">
+          <span class="badge">${esc(t.cat)}</span>
+          <h3>${esc(t.title)}</h3>
+          <p class="mg-task__desc">${esc(t.desc)}</p>
+          <div class="mg-rec" aria-label="Recomendación">${rec(r)}</div>
+          <p class="mg-task__why">${esc(t.why)}</p>
+          <p class="mg-task__up"><strong>Si no basta:</strong> ${esc(t.up)}</p>
+          <p class="mg-task__others">${others}</p>
+          <p class="mg-task__cmds"><button class="copy" type="button" data-copy="${esc(M[r[0]].cmd)}">${esc(M[r[0]].cmd)}</button> <button class="copy" type="button" data-copy="${esc("/effort " + r[1])}">/effort ${esc(r[1])}</button></p>
+        </article>`;
+    };
+    function draw() {
+      prioEl.innerHTML = G.priorities.map((p) => `<button class="chip" type="button" aria-pressed="${p.id === state.prio}" data-prio="${p.id}">${esc(p.label)}</button>`).join("");
+      hintEl.textContent = G.priorities.find((p) => p.id === state.prio).hint;
+      catEl.innerHTML = cats.map((c) => `<button class="chip" type="button" aria-pressed="${c === state.cat}" data-cat="${esc(c)}">${esc(c)}</button>`).join("");
+      const q = norm(state.q.trim());
+      const items = G.tasks.filter((t) =>
+        (state.cat === "Todas" || t.cat === state.cat) && (!q || norm([t.title, t.desc, t.cat, t.why].join(" ")).includes(q)));
+      countEl.textContent = items.length + (items.length === 1 ? " tarea" : " tareas");
+      tasksEl.innerHTML = items.length ? items.map(taskCard).join("")
+        : `<div class="empty">Ninguna tarea coincide. Prueba con otra palabra o pregúntale al asistente de IA qué modelo te conviene.</div>`;
+    }
+    prioEl.addEventListener("click", (e) => { const b = e.target.closest("[data-prio]"); if (b) { state.prio = b.dataset.prio; draw(); } });
+    catEl.addEventListener("click", (e) => { const b = e.target.closest("[data-cat]"); if (b) { state.cat = b.dataset.cat; draw(); } });
+    $("#mgFilter", root).addEventListener("input", (e) => { state.q = e.target.value; draw(); });
+    $(".mg-toc", root).addEventListener("click", (e) => {
+      const b = e.target.closest("[data-go]"); if (!b) return;
+      const t = document.getElementById(b.dataset.go);
+      if (t) t.scrollIntoView({ block: "start", behavior: "smooth" });
+    });
+    draw();
+  };
+
   /* ----- Comandos (con filtros) ----- */
   views.comandos = function (root, params) {
     const state = { cat: params.get("cat") || "Todos", q: params.get("q") || "" };
@@ -496,6 +660,11 @@
       { title: "Flags", view: "cli", items: D.cliFlags.filter((c) => match(c.name, c.desc)) },
       { title: "Atajos", view: "atajos", items: D.shortcuts.filter((s) => match(s.keys.join(" "), s.desc)).map((s) => ({ name: s.keys.join(" + "), desc: s.desc })) },
       { title: "Casos de uso", view: "casos", items: D.useCases.filter((u) => match(u.title, u.summary, u.cat, u.type)).map((u) => ({ name: u.title, desc: u.summary, note: u.cat })) },
+      { title: "Modelos y effort", view: "modelos", items: [
+          ...D.modelsGuide.models.filter((m) => match(m.name, m.tagline, m.tier, m.useCases.map((u) => u.t).join(" "))).map((m) => ({ name: m.name, desc: m.tagline, note: m.tier })),
+          ...D.modelsGuide.tasks.filter((t) => match(t.title, t.desc, t.cat)).map((t) => ({ name: t.title, desc: t.desc, note: t.cat })),
+          ...D.modelsGuide.effortLevels.filter((e) => match("effort " + e.id, e.tag, e.text)).map((e) => ({ name: "effort " + e.id, desc: e.tag + ". " + e.text }))
+        ] },
       { title: "Extensiones", view: "extensiones", items: D.extensions.filter((e) => match(e.title, e.summary, (e.points || []).join(" "))).map((e) => ({ name: e.title, desc: e.summary })) },
       { title: "Buenas prácticas", view: "practicas", items: D.practices.filter((p) => match(p.title, p.text)).map((p) => ({ name: p.title, desc: p.text })) }
     ].filter((g) => q && g.items.length);

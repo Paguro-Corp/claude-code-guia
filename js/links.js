@@ -122,6 +122,42 @@
     });
   });
 
+  /* Modelos y effort (js/models.js) */
+  const MG = D.modelsGuide;
+  const modelName = (id) => (MG.models.find((m) => m.id === id) || { short: id }).short;
+  const recText = (r) => `${modelName(r[0])} · ${r[1]}`;
+  const money = (n) => "$" + (n < 1 ? n.toFixed(2) : n);
+  if (MG) {
+    MG.models.forEach((m) => {
+      const id = entryId("model", m.short);
+      add({
+        id, kind: "Modelo", label: m.name, short: m.short,
+        desc: `${m.tagline} API: ${money(m.price.in)} entrada / ${money(m.price.out)} salida por 1M tokens. Effort inicial: ${m.effortStart}. Ideal para: ${m.useCases.map((u) => u.t).join("; ")}. Evítalo: ${m.avoid[0]}`,
+        view: "modelos", param: "focus", value: id, terms: [m.id]
+      });
+    });
+    MG.effortLevels.forEach((e) => {
+      const id = entryId("effort", e.id);
+      add({
+        id, kind: "Effort", label: "Effort " + e.id, short: "effort " + e.id,
+        desc: `${e.tag}. ${e.text} Úsalo en: ${e.use} Ojo: ${e.watch}`,
+        view: "modelos", param: "focus", value: id, terms: e.id === "xhigh" ? ["xhigh"] : []
+      });
+    });
+    MG.tasks.forEach((t) => {
+      const id = entryId("task", t.title);
+      add({
+        id, kind: "Elegir modelo", label: t.title, short: t.title,
+        desc: `Calidad: ${recText(t.rec.calidad)} | Equilibrio: ${recText(t.rec.equilibrio)} | Ahorro: ${recText(t.rec.ahorro)}. ${t.desc} ${t.why}`,
+        view: "modelos", param: "focus", value: id, terms: []
+      });
+    });
+    MG.combos.forEach((c) => {
+      const id = entryId("combo", c.title);
+      add({ id, kind: "Estrategia", label: c.title, short: c.title, desc: c.text, view: "modelos", param: "focus", value: id, terms: [] });
+    });
+  }
+
   /* ---------- Consulta ---------- */
   const byHrefMap = new Map();
   const byIdMap = new Map();

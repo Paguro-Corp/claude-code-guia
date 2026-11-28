@@ -9,7 +9,8 @@ window.CC_DATA = {
     { id: "inicio",      label: "Inicio",           icon: "◆" },
     { id: "como-funciona", label: "Cómo funciona",  icon: "⟳" },
     { id: "casos",       label: "Casos de uso",     icon: "✦" },
-    { id: "comandos",    label: "Comandos /",       icon: "/" },
+    { id: "modelos",     label: "Modelos",          icon: "◎" },
+    { id: "comandos",   label: "Comandos /",       icon: "/" },
     { id: "cli",         label: "CLI y flags",      icon: ">_" },
     { id: "atajos",      label: "Atajos",           icon: "⌘" },
     { id: "extensiones", label: "Extensiones",      icon: "⬡" },
@@ -24,6 +25,7 @@ window.CC_DATA = {
     cards: [
       { view: "como-funciona", title: "Cómo funciona",   text: "El ciclo agéntico, las herramientas y el contexto." },
       { view: "casos",         title: "Casos de uso",    text: "20 proyectos que puedes construir: webs, funnels, dashboards y más." },
+      { view: "modelos",       title: "Modelos y effort", text: "Qué modelo y qué nivel de effort elegir según tu tarea." },
       { view: "comandos",      title: "Comandos /",      text: "Todos los slash commands con su descripción." },
       { view: "cli",           title: "CLI y flags",     text: "Lanza Claude Code desde la terminal con opciones." },
       { view: "atajos",        title: "Atajos",          text: "Teclas y prefijos para ir más rápido." },
